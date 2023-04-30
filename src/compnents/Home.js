@@ -9,7 +9,7 @@ export default function Home() {
     const [nextCursor, setnextCursor]=useState(null);
     const [isLoading, setLoading]=useState(false);
     const [searchValue, setSearchValue]= useState("");
-    const [popup, setPopup]= useState({isPopup:false, imageUrl:null})
+    const [popup, setPopup]= useState({isPopup:false, imageUrl:null});
 
     useEffect(()=>{
         const fetchData =async() =>{
@@ -20,7 +20,6 @@ export default function Home() {
             setLoading(false);
         }
         fetchData();
-        console.log(imageList);
     },[])
 
     async function loadmore(){
@@ -31,27 +30,41 @@ export default function Home() {
         setLoading(false);
     }
 
+
     function handleChange(e){
         setSearchValue(e.target.value);
     }
 
+
     async function searchPhoto(){
+        setLoading(true);
         const data=await searchPhotos(searchValue,nextCursor);
         setImageList(data.resources);
         setnextCursor(data.next_cursor);
+        setLoading(false);
+        
     }
+
 
     async function clearSearch(){
         setSearchValue("");
-        setLoading(true)
+        setLoading(true);
         const data= await getPhotos();
         setImageList(data.resources);
         setnextCursor(data.next_cursor);
         setLoading(false);
     }
 
-    function imagePopup(url){
-        setPopup({isPopup:true, imageUrl:url});
+
+    function imagePopup(goturl){
+
+        let imageIndex= imageList.findIndex((element)=>{
+            return element.url===goturl
+        });
+
+        setPopup({isPopup:true, imageUrl:goturl, imageIndex:imageIndex});
+    
+        
 
     }
 
@@ -59,22 +72,19 @@ export default function Home() {
         setPopup({isPopup:false, imageUrl:null});
     }
 
-    function switchphoto(direction){
 
-        let imageIndex= imageList.findIndex((element)=>{
-            return element.url===popup.imageUrl
-        });
+    function switchphoto(direction){
 
         let switchUrl=popup.imageUrl;
         if(direction==='left'){
-            switchUrl=imageList[imageIndex-1].url;
+            switchUrl=imageList[popup.imageIndex-1].url
+            setPopup({isPopup:true, imageUrl:switchUrl,imageIndex:popup.imageIndex-1 });
         }
         if(direction==='right'){
-            switchUrl=imageList[imageIndex+1].url;
+            switchUrl=imageList[popup.imageIndex+1].url
+            setPopup({isPopup:true, imageUrl:switchUrl,imageIndex:popup.imageIndex+1 });
         }
-
-        setPopup({isPopup:true, imageUrl:switchUrl})
-
+        
     }
 
   return (
@@ -85,11 +95,13 @@ export default function Home() {
                 <div className="search-sec">
                     <input type="text" className='search-box' name="search" id="search" value={searchValue} onChange={handleChange}/>
                     <button className='btn btn-sm' onClick={clearSearch}>✕</button>
-                    <button className='btn' onClick={searchPhoto}>Search</button>
+                    <button className='btn btn-comp' onClick={searchPhoto}>Search</button>
+                    <button className='btn btn-mbl' onClick={searchPhoto} ><i class="fa fa-search"></i></button>
                 </div>
 
                 <div className="upload">
-                    <button className='btn'>Upload</button>
+                    <button className='btn btn-comp'>Upload</button>
+                    <button className='btn btn-mbl'>+</button>
                 </div>
             </nav>
             :
@@ -97,7 +109,7 @@ export default function Home() {
         }
 
            {popup.isPopup?
-            <Photo url={popup.imageUrl} goBack={goBack} switchphoto={(direction)=>{switchphoto(direction)}} />
+            <Photo url={popup.imageUrl} goBack={goBack} switchphoto={(direction)=>{switchphoto(direction)}} imageIndex={popup.imageIndex} imageArrayLength={imageList.length} />
             :<></>
             }
         
